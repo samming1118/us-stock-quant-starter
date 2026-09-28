@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-Hant" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="免費、開源、瀏覽器內運行的美股量化選股與回測工具。">
+  <title>QuantStart 美股量化入門</title>
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要內容</a>
+  <header class="topbar">
+    <a class="brand" href="#setup" aria-label="QuantStart 首頁">
+      <svg class="logo" viewBox="0 0 40 40" role="img" aria-label="QuantStart logo" fill="none">
+        <path d="M7 27.5 15 19l6 5 12-14" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M27 10h6v6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8 33h24" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".45"/>
+      </svg>
+      <span>QuantStart</span>
+      <span class="tag">US</span>
+    </a>
+    <div class="top-actions">
+      <span class="privacy-note">資料只在瀏覽器處理</span>
+      <a class="github-link" href="https://github.com/samming1118/us-stock-quant-starter" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <button class="icon-btn" data-theme-toggle aria-label="切換至深色模式" title="切換主題">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <nav class="sidebar" aria-label="主要導覽">
+      <a class="nav-item active" href="#setup" data-view="setup"><span>01</span>設定策略</a>
+      <a class="nav-item" href="#results" data-view="results"><span>02</span>回測結果</a>
+      <a class="nav-item" href="#guide" data-view="guide"><span>03</span>新手指南</a>
+      <div class="sidebar-foot">
+        <strong>避免常見偏差</strong>
+        <p>訊號延遲一日執行，減少前視偏差；請自行檢查倖存者偏差及資料品質。</p>
+      </div>
+    </nav>
+
+    <main id="main" class="main">
+      <section id="setup" class="view active" aria-labelledby="setup-title">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">零程式碼 · 每日數據</p>
+            <h1 id="setup-title">建立第一個量化策略</h1>
+            <p>上載包含一隻或多隻美股的 CSV，設定規則，再以相同權重每日再平衡。</p>
+          </div>
+          <span class="step-badge">步驟 1 / 3</span>
+        </div>
+
+        <div class="setup-grid">
+          <section class="panel upload-panel" aria-labelledby="data-title">
+            <div class="panel-head"><div><span class="panel-number">01</span><h2 id="data-title">匯入價格數據</h2></div><span id="dataStatus" class="status neutral">未載入</span></div>
+            <label class="dropzone" id="dropzone" for="csvFile">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M5 14v5h14v-5"/></svg>
+              <strong>拖放 CSV，或按此選擇檔案</strong>
+              <span>欄位：date, ticker, close；volume 為選填</span>
+              <input id="csvFile" type="file" accept=".csv,text/csv">
+            </label>
+            <div class="upload-actions">
+              <a class="text-link" href="./data-template.csv" download>下載 CSV 範本</a>
+              <button class="text-link" id="pasteToggle" type="button">貼上 CSV</button>
+            </div>
+            <div id="pasteArea" class="paste-area" hidden>
+              <label for="csvPaste">貼上 CSV 內容</label>
+              <textarea id="csvPaste" rows="6" placeholder="date,ticker,close,volume"></textarea>
+              <button id="parsePaste" class="btn secondary" type="button">讀取內容</button>
+            </div>
+            <div id="dataSummary" class="data-summary" hidden></div>
+            <div id="dataError" class="inline-error" role="alert" hidden></div>
+          </section>
+
+          <section class="panel rules-panel" aria-labelledby="rules-title">
+            <div class="panel-head"><div><span class="panel-number">02</span><h2 id="rules-title">設定入選條件</h2></div></div>
+            <div class="rule-row">
+              <div><label for="fastSma">快速平均線</label><small>捕捉較短趨勢</small></div>
+              <div class="number-control"><input id="fastSma" type="number" min="2" max="100" value="20"><span>日</span></div>
+            </div>
+            <div class="rule-row">
+              <div><label for="slowSma">慢速平均線</label><small>確認主要趨勢</small></div>
+              <div class="number-control"><input id="slowSma" type="number" min="5" max="300" value="60"><span>日</span></div>
+            </div>
+            <div class="rule-row">
+              <div><label for="rsiMin">RSI 下限</label><small>避開動能過弱</small></div>
+              <div class="number-control"><input id="rsiMin" type="number" min="0" max="100" value="45"><span></span></div>
+            </div>
+            <div class="rule-row">
+              <div><label for="rsiMax">RSI 上限</label><small>避開過度追價</small></div>
+              <div class="number-control"><input id="rsiMax" type="number" min="0" max="100" value="75"><span></span></div>
+            </div>
+            <div class="rule-row">
+              <div><label for="costBps">單邊交易成本</label><small>佣金與滑價假設</small></div>
+              <div class="number-control"><input id="costBps" type="number" min="0" max="200" value="10"><span>bps</span></div>
+            </div>
+            <label class="check-row"><input id="volumeFilter" type="checkbox"><span><strong>成交量確認</strong><small>成交量高於 20 日平均；需要 volume 欄位</small></span></label>
+          </section>
+
+          <section class="panel logic-panel" aria-labelledby="logic-title">
+            <div class="panel-head"><div><span class="panel-number">03</span><h2 id="logic-title">執行邏輯</h2></div></div>
+            <div class="logic-flow">
+              <div><span>收市後</span><strong>計算 SMA 與 RSI</strong></div>
+              <i aria-hidden="true">→</i>
+              <div><span>下一交易日</span><strong>持有合資格股票</strong></div>
+              <i aria-hidden="true">→</i>
+              <div><span>每日</span><strong>等權重再平衡</strong></div>
+            </div>
+            <div class="callout"><strong>為何延遲一日？</strong><p>使用今日完整收市數據產生訊號，再套用下一日回報，避免策略「預知」同日結果。</p></div>
+            <button id="runBacktest" class="btn primary" type="button" disabled>開始回測 <span>→</span></button>
+          </section>
+        </div>
+      </section>
+
+      <section id="results" class="view" aria-labelledby="results-title">
+        <div class="page-heading">
+          <div><p class="eyebrow">策略結果</p><h1 id="results-title">回測儀表板</h1><p id="periodLabel">請先匯入數據及執行回測。</p></div>
+          <div class="result-actions"><button id="exportResults" class="btn secondary" type="button" disabled>匯出每日結果</button><button id="rerun" class="btn primary small" type="button">調整策略</button></div>
+        </div>
+        <div id="emptyResults" class="empty-state">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3"/></svg>
+          <h2>尚未有回測結果</h2><p>先上載每日價格 CSV，然後設定規則並按「開始回測」。</p><button class="btn primary" data-go-setup type="button">前往設定</button>
+        </div>
+        <div id="resultContent" hidden>
+          <div class="kpi-grid">
+            <article class="kpi"><span>總回報</span><strong id="kpiReturn">—</strong><small>扣除交易成本</small></article>
+            <article class="kpi"><span>年化回報</span><strong id="kpiCagr">—</strong><small>CAGR</small></article>
+            <article class="kpi"><span>最大回撤</span><strong id="kpiDrawdown">—</strong><small>峰值至谷底</small></article>
+            <article class="kpi"><span>Sharpe</span><strong id="kpiSharpe">—</strong><small>無風險利率假設 0%</small></article>
+          </div>
+          <div class="chart-grid">
+            <section class="panel chart-panel"><div class="chart-head"><div><h2>累積表現</h2><p>策略與匯入股票等權買入持有基準</p></div><span class="status positive" id="activeRate">—</span></div><div class="chart-wrap"><canvas id="equityChart" aria-label="策略與基準累積回報圖"></canvas></div></section>
+            <section class="panel detail-panel"><h2>風險與執行</h2><dl class="metrics-list"><div><dt>年化波動率</dt><dd id="metricVol">—</dd></div><div><dt>最佳單日</dt><dd id="metricBest">—</dd></div><div><dt>最差單日</dt><dd id="metricWorst">—</dd></div><div><dt>平均持倉數</dt><dd id="metricPositions">—</dd></div><div><dt>年化換手率</dt><dd id="metricTurnover">—</dd></div><div><dt>有效交易日</dt><dd id="metricDays">—</dd></div></dl></section>
+          </div>
+          <section class="panel table-panel"><div class="table-head"><div><h2>最近訊號</h2><p>最新數據日期各股票的指標與狀態</p></div><span id="signalCount" class="status neutral">0 隻入選</span></div><div class="table-scroll"><table><thead><tr><th>股票</th><th>收市價</th><th>快速 SMA</th><th>慢速 SMA</th><th>RSI(14)</th><th>訊號</th></tr></thead><tbody id="signalBody"></tbody></table></div></section>
+          <aside class="warning-box"><strong>重要提示</strong><p>回測屬假設結果，不代表實際交易表現。結果未自動處理除牌股票、稅項、公司行動、股息或完整市場衝擊；請用獨立樣本及模擬交易驗證。</p></aside>
+        </div>
+      </section>
+
+      <section id="guide" class="view" aria-labelledby="guide-title">
+        <div class="page-heading"><div><p class="eyebrow">由零開始</p><h1 id="guide-title">新手使用攻略</h1><p>先建立可解釋、可重複的規則，再追求複雜模型。</p></div></div>
+        <div class="guide-layout">
+          <article class="panel guide-main">
+            <h2>建議流程</h2>
+            <ol class="timeline">
+              <li><span>1</span><div><strong>準備已調整價格</strong><p>每行一個交易日與股票。close 最好採用已調整收市價，避免拆股令回報失真。</p></div></li>
+              <li><span>2</span><div><strong>先用簡單假設</strong><p>例如快速 SMA 高於慢速 SMA，兼且 RSI 介乎 45 至 75；規則越少越容易理解。</p></div></li>
+              <li><span>3</span><div><strong>加入實際成本</strong><p>設定佣金與滑價。交易越頻密，成本對結果的影響通常越大。</p></div></li>
+              <li><span>4</span><div><strong>分開訓練與驗證時段</strong><p>先用較早數據設計規則，再用未參與調整的較新時段檢驗。</p></div></li>
+              <li><span>5</span><div><strong>模擬後才考慮真金白銀</strong><p>檢查資料、訊號時間、流動性、稅務及心理承受能力。</p></div></li>
+            </ol>
+          </article>
+          <aside class="panel glossary"><h2>指標速查</h2><dl><div><dt>SMA</dt><dd>指定日數收市價的簡單平均，用來描述趨勢。</dd></div><div><dt>RSI</dt><dd>0 至 100 的動能指標；本工具採用 14 日 Wilder 計算。</dd></div><div><dt>CAGR</dt><dd>將整段回報換算成年均複合增長。</dd></div><div><dt>最大回撤</dt><dd>資產曲線由歷史高位下跌至其後低位的最大幅度。</dd></div><div><dt>Sharpe</dt><dd>以年化平均回報除以年化波動率；此工具假設無風險利率為 0%。</dd></div></dl></aside>
+        </div>
+        <section class="panel checklist"><h2>上線前檢查清單</h2><div class="check-grid"><label><input type="checkbox"> 價格已按拆股／股息調整</label><label><input type="checkbox"> 沒有使用未來數據</label><label><input type="checkbox"> 已計入合理交易成本</label><label><input type="checkbox"> 已檢查倖存者偏差</label><label><input type="checkbox"> 已用獨立時段驗證</label><label><input type="checkbox"> 已設定最大虧損與倉位限制</label></div></section>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav" aria-label="手機導覽"><a class="active" href="#setup" data-view="setup">設定</a><a href="#results" data-view="results">結果</a><a href="#guide" data-view="guide">指南</a></nav>
+</body>
+</html>
